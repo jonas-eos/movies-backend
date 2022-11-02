@@ -1,12 +1,14 @@
 require("express-async-errors");
 
-const AppError = require("./utils/AppErros");
+const AppError = require("./utils/AppErrors");
 const express = require("express");
+const routers = require("./routers");
 
 const app = express();
 const port = 3333;
 
 app.use(express.json());
+app.use(routers);
 
 /**
  * Manipulate error and how application works with each error,
