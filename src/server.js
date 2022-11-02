@@ -22,7 +22,7 @@ app.use(routers);
 app.use((error, _request, response, _next) => {
   if (error instanceof AppError) {
     return response.status(error.statusCode).json({
-      status: error,
+      status: error.statusCode,
       message: error.message
     });
   };
