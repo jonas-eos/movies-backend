@@ -1,0 +1,19 @@
+{
+  "name": "movies-backend",
+  "version": "1.0.0",
+  "description": "A API that work with movies information, the user registered can add movies with descriptions and score rating.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ./src/server.js",
+    "dev": "nodemon ./src/server.js"
+  },
+  "author": "Jonas Silva",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-async-errors": "^3.1.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  }
+}
