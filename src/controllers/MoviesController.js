@@ -128,6 +128,42 @@ class MoviesController {
 
     return response.json();
   };
+
+  /**
+   * Delete a movie, but first check if passed the id and user id as params, after that search the movie
+   *  by movie id informed, and check if the movie user id match with the user id passed as params,
+   *  if all rules is ok, delete the movie.
+   *
+   * @param {Object} request The movie id and user id passed by params
+   * @returns The success status of delete request
+   */
+  async delete(request, response) {
+    const { id, user_id } = request.params;
+
+    if (!id) {
+      throw new AppError("You must inform which movie do you want to update!");
+    };
+
+    if (!user_id) {
+      throw new AppError("You must inform which user has created the movie note!");
+    };
+
+    const movie = await knex("movies")
+      .where({ id })
+      .first();
+
+    if (!movie) {
+      throw new AppError("This movie doesn't not exists!");
+    };
+
+    if (Number(user_id) !== movie.user_id) {
+      throw new AppError("The user is incorrect!");
+    };
+
+    await knex("movies").where({ id }).delete();
+
+    return response.json();
+  };
 };
 
 module.exports = MoviesController;
