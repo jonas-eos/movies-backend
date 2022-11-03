@@ -1,4 +1,4 @@
-const { hash } = require("bcryptjs");
+const { hash, compare } = require("bcryptjs");
 const knex = require("../database/knex");
 const AppError = require("../utils/AppErrors");
 
@@ -10,8 +10,8 @@ class UsersController {
    */
   async index(_request, response) {
     const users = await knex("users")
-    .select("name", "email")
-    .orderBy("name");
+      .select("name", "email")
+      .orderBy("name");
 
     return response.json(users);
   };
@@ -29,7 +29,7 @@ class UsersController {
     const user = await knex("users").select("name", "email").where({ id: user_id });
 
     return response.json(user);
-  }
+  };
 
   /**
    * Create a new user, name, email and password are required, need check if
@@ -68,6 +68,59 @@ class UsersController {
     });
 
     return response.status(201).json();
+  };
+
+  /**
+   * Update user information if informed, if te user pass password, they must pass old password too,
+   *  else the app must stop the update progress and inform that the use doesn't pass the old password,
+   *  another important point is that the user email can't exist in another user registry, if exists the app
+   *  must throw a error with information that the email has already registered by another person.
+   *
+   * @param {Object} request The name, email, password and old password pass throw body and user id from params
+   * @returns The success status of update request
+   */
+  async update(request, response) {
+    let { name, email, password, old_password } = request.body;
+    const { user_id } = request.params;
+
+    const user = await knex("users")
+      .where({ id: user_id })
+      .first();
+
+    if (!user) {
+      throw new AppError("User does not exists!");
+    };
+
+    const emailHasAlreadyRegistered = await knex("users")
+      .where({ email })
+      .first();
+
+    if (emailHasAlreadyRegistered && emailHasAlreadyRegistered.id !== user.id) {
+      throw new AppError("This email has already registered!");
+    };
+
+    name = name ?? user.name;
+    email = email ?? user.email;
+
+    if (password) {
+      if (!old_password) {
+        throw new AppError("You must inform the old password to create the new one!");
+      };
+
+      const oldPasswordMatch = await compare(old_password, user.password);
+
+      if (!oldPasswordMatch) {
+        throw new AppError("The old password is incorrect!");
+      };
+
+    };
+    password = password ? await hash(password, 8) : user.password;
+
+    await knex("users")
+      .update({ name, email, password })
+      .where({ id: user_id });
+
+    return response.json();
   };
 };
 
