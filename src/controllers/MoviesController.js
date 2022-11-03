@@ -18,6 +18,24 @@ class MoviesController {
   };
 
   /**
+   * Show the movie title, description, rating and the user that input the movie data note
+   *
+   * @param {Object} request movie id passed by params
+   * @returns The movie data
+   */
+  async show(request, response) {
+    const { id } = request.params;
+
+    const movie = await knex("movies")
+    .select("movies.title", "movies.description", "movies.rating", "users.name")
+    .where("movies.id", id)
+    .innerJoin("users", "users.id", "movies.user_id")
+    .first();
+
+    return response.json(movie);
+  };
+
+  /**
    * Create a new movie notes with title, description and rating, the rating score must be between
    *  1 and 5, else the app must be return with error, before register the movie notes, must check if passed user_id
    *  if not passed, the app must inform that must inform the user_id, and another check that must be do before
