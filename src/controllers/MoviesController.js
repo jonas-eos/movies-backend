@@ -46,7 +46,7 @@ class MoviesController {
    * @returns the success status 201
    */
   async create(request, response) {
-    const { title, description, rating } = request.body;
+    const { title, description, rating, tags } = request.body;
     const { user_id } = request.params;
 
     const user = await knex("users").where({ id: user_id }).first();
