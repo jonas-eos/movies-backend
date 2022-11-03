@@ -15,6 +15,21 @@ class UsersController {
   };
 
   /**
+   * Show the user name and email, the request must by passed by params and must have
+   *  the user id to be success.
+   *
+   * @param {Object} request user id informed by params
+   * @returns The user data
+   */
+  async show(request, response) {
+    const { user_id } = request.params;
+
+    const user = await knex("users").select("name", "email").where({ id: user_id });
+
+    return response.json(user);
+  }
+
+  /**
    * Create a new user, name, email and password are required, need check if
    *  has already a user with the filled email.
    *
@@ -36,7 +51,7 @@ class UsersController {
       throw new AppError("The password is required!");
     };
 
-    const userExist = await knex("users").where( {email} );
+    const userExist = await knex("users").where({ email });
 
     if (userExist[0]) {
       throw new AppError("This email has already registered!");

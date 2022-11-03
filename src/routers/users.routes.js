@@ -6,5 +6,6 @@ const userController = new UsersController();
 
 usersRoutes.post("/", userController.create);
 usersRoutes.get("/", userController.index);
+usersRoutes.get("/:user_id", userController.show);
 
 module.exports = usersRoutes;
