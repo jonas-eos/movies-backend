@@ -10,9 +10,9 @@ class MoviesController {
    */
   async index(_request, response) {
     const movies = await knex("movies")
-    .select("movies.title", "movies.description", "movies.rating", "users.name")
-    .innerJoin("users", "users.id", "movies.user_id")
-    .orderBy("movies.title");
+      .select("movies.title", "movies.description", "movies.rating", "users.name")
+      .innerJoin("users", "users.id", "movies.user_id")
+      .orderBy("movies.title");
 
     return response.json(movies);
   };
@@ -27,10 +27,10 @@ class MoviesController {
     const { id } = request.params;
 
     const movie = await knex("movies")
-    .select("movies.title", "movies.description", "movies.rating", "users.name")
-    .where("movies.id", id)
-    .innerJoin("users", "users.id", "movies.user_id")
-    .first();
+      .select("movies.title", "movies.description", "movies.rating", "users.name")
+      .where("movies.id", id)
+      .innerJoin("users", "users.id", "movies.user_id")
+      .first();
 
     return response.json(movie);
   };
@@ -49,13 +49,13 @@ class MoviesController {
     const { title, description, rating } = request.body;
     const { user_id } = request.params;
 
-    const user = await knex("users").where({id: user_id}).first();
+    const user = await knex("users").where({ id: user_id }).first();
 
-    if(!user) {
+    if (!user) {
       throw new AppError("The user informed doesn't exists!");
     };
 
-    if(!user_id) {
+    if (!user_id) {
       throw new AppError("The user is required!");
     };
 
@@ -63,11 +63,11 @@ class MoviesController {
       throw new AppError("The movie title is required!");
     };
 
-    if(!description) {
+    if (!description) {
       throw new AppError("The movie description is required!");
     };
 
-    if(rating < 1 || rating > 5) {
+    if (rating < 1 || rating > 5) {
       throw new AppError("The rating score must be between 1 and 5!");
     };
 
@@ -79,6 +79,54 @@ class MoviesController {
     })
 
     return response.status(201).json();
+  };
+
+  /**
+   * Update movie information if informed, to update the movie information, the user id must match the user id registered in movie
+   *  that want to update information, but first must check if exists the movie registered and the user.
+   *  The rating score must be between 1 and 5, else must return a error message with information.
+   *  If one of the information like title, description or rating has no passed in body, the api must get the registered data and
+   *  save again on knex update method.
+   *
+   * @param {Object} request The movie id and user_id passed by params and title, description and rating
+   * @returns THe success status of update request
+   */
+  async update(request, response) {
+    const { id, user_id } = request.params;
+    let { title, description, rating } = request.body;
+
+    if (!id) {
+      throw new AppError("You must inform which movie do you want to update!");
+    };
+
+    if (!user_id) {
+      throw new AppError("You must inform which user has created the movie note!");
+    };
+
+    const movie = await knex("movies").where({ id }).first();
+    const user = await knex("users").where({ id: user_id }).first();
+
+    if (!movie) {
+      throw new AppError("This movie doesn't not exists!");
+    };
+
+    if (!user || user.id !== movie.user_id) {
+      throw new AppError("The user is incorrect!");
+    };
+
+    if (rating < 1 || rating > 5) {
+      throw new AppError("The rating score must be between 1 and 5!");
+    };
+
+    title = title ?? movie.title;
+    description = description ?? movie.description;
+    rating = rating ?? movie.rating;
+
+    await knex("movies")
+      .update({ title, description, rating })
+      .where({ id });
+
+    return response.json();
   };
 };
 
