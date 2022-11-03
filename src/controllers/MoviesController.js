@@ -8,13 +8,57 @@ class MoviesController {
    *
    * @returns All movies with title, description and rating information
    */
-  async index(_request, response) {
-    const movies = await knex("movies")
-      .select("movies.title", "movies.description", "movies.rating", "users.name")
-      .innerJoin("users", "users.id", "movies.user_id")
-      .orderBy("movies.title");
+  async index(request, response) {
+    const { user_id, title, tags } = request.query;
 
-    return response.json(movies);
+    if (!user_id) {
+      throw new AppError("User id is required!");
+    }
+
+    let movies;
+
+    if (tags) {
+      const filterTags = tags.split(',').map(tag => tag.trim());
+
+      movies = await knex("tags")
+        .select([
+          "movies.id",
+          "movies.title",
+          "movies.description",
+          "movies.rating"
+        ])
+        .where("movies.user_id", user_id)
+        .whereLike("movies.title", `%${title || ''}`)
+        .whereIn("tags.name", filterTags)
+        .innerJoin("movies", "movies.id", "tags.movie_id")
+        .orderBy("movies.title");
+
+    } else {
+
+      movies = await knex("movies")
+        .select("id", "title", "description", "rating")
+        .where({ user_id })
+        .whereLike("title", `%${title || ''}%`)
+        .orderBy("title");
+    };
+
+    const userTags = await knex("tags")
+      .where({ user_id });
+
+
+      const moviesWithTags = movies.map(movie => {
+        const movieTag = userTags.filter(tag => tag.movie_id === movie.id);
+        console.log(userTags);
+
+        return {
+          title: movie.title,
+          description: movie.description,
+          rating: movie.rating,
+          tags: movieTag.map(tag => tag.name)
+        };
+      });
+
+    return response.json(moviesWithTags);
   };
 
   /**
@@ -71,12 +115,22 @@ class MoviesController {
       throw new AppError("The rating score must be between 1 and 5!");
     };
 
-    await knex("movies").insert({
+    const movie_id = await knex("movies").insert({
       title,
       description,
       rating,
       user_id,
-    })
+    });
+
+    const tagsInsert = tags.map(name => {
+      return {
+        movie_id,
+        user_id,
+        name,
+      };
+    });
+
+    await knex("tags").insert(tagsInsert);
 
     return response.status(201).json();
   };
