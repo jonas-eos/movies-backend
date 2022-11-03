@@ -9,7 +9,9 @@ class UsersController {
    * @returns All usernames and user emails registered
    */
   async index(_request, response) {
-    const users = await knex("users").select("name", "email");
+    const users = await knex("users")
+    .select("name", "email")
+    .orderBy("name");
 
     return response.json(users);
   };
