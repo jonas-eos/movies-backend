@@ -46,17 +46,16 @@ class MoviesController {
       .where({ user_id });
 
 
-      const moviesWithTags = movies.map(movie => {
-        const movieTag = userTags.filter(tag => tag.movie_id === movie.id);
-        console.log(userTags);
+    const moviesWithTags = movies.map(movie => {
+      const movieTag = userTags.filter(tag => tag.movie_id === movie.id);
 
-        return {
-          title: movie.title,
-          description: movie.description,
-          rating: movie.rating,
-          tags: movieTag.map(tag => tag.name)
-        };
-      });
+      return {
+        title: movie.title,
+        description: movie.description,
+        rating: movie.rating,
+        tags: movieTag.map(tag => tag.name)
+      };
+    });
 
     return response.json(moviesWithTags);
   };
@@ -68,15 +67,30 @@ class MoviesController {
    * @returns The movie data
    */
   async show(request, response) {
-    const { id } = request.params;
+    const { id, user_id } = request.params;
 
     const movie = await knex("movies")
-      .select("movies.title", "movies.description", "movies.rating", "users.name")
-      .where("movies.id", id)
-      .innerJoin("users", "users.id", "movies.user_id")
+      .select("movies.id", "movies.title", "movies.description", "movies.rating", "movies.user_id")
+      .where({ id })
       .first();
 
-    return response.json(movie);
+    if (!movie || movie.user_id !== Number(user_id)) {
+      throw new AppError("This movie doesn't not exists");
+    };
+
+    const userTags = await knex("tags")
+      .where({ user_id });
+
+    const movieTag = userTags.filter(tag => tag.movie_id === movie.id);
+
+    const movieWithTag = {
+      title: movie.title,
+      description: movie.description,
+      rating: movie.rating,
+      tags: movieTag.map(tag => tag.name)
+    };
+
+    return response.json(movieWithTag);
   };
 
   /**
